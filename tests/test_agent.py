@@ -88,7 +88,8 @@ class TestStaleFeatureDetector:
         result = agent_no_write.scan()
         stale = [f for f in result.findings if f.type == FindingType.STALE_FEATURE]
         assert len(stale) == 1
-        assert "225" in stale[0].description  # ~225 hours stale
+        # age is time-dependent (NOW - 9 days); assert it's well past SLA
+        assert stale[0].evidence["age_hours"] > 200  # ~216h at creation, grows over time
         assert stale[0].evidence["sla_breach_ratio"] > 3  # critical
 
 

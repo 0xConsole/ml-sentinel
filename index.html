@@ -454,5 +454,26 @@ ml-sentinel estate --mock         # list the ML estate</div>
   <p style="margin-top: 0.3rem;">Built for the <a href="https://devpost.com/datahub-agent-hackathon">DataHub Agent Hackathon</a> — Challenge 3: Protect ML models in production</p>
 </footer>
 
+
+<!-- Asciinema Demo Recording -->
+<section style="max-width:900px;margin:40px auto;padding:0 20px;">
+  <h2 style="color:var(--accent);font-family:monospace;">📺 Live Terminal Demo</h2>
+  <p style="color:var(--text-dim);font-size:14px;">Watch ML Sentinel detect all 5 silent ML problems in under 1 second.</p>
+  <link rel="stylesheet" type="text/css" href="https://asciinema.org/assets/asciinema-player.css" />
+  <script src="https://asciinema.org/assets/asciinema-player.js"></script>
+  <div id="asciinema-player" style="max-width:900px;"></div>
+  <script>
+    AsciinemaPlayer.create(
+      'https://asciinema.org/a/jt7tig2TNMh4a64c.cast',
+      document.getElementById('asciinema-player'),
+      { cols: 80, rows: 24, autoPlay: true, loop: true, speed: 1.5,
+        theme: { foreground: '#cdd6f4', background: '#1a1a2e', cursor: '#f5e0dc' } }
+    );
+  </script>
+  <p style="color:var(--text-dim);font-size:12px;margin-top:10px;">
+    <a href="https://asciinema.org/a/jt7tig2TNMh4a64c" target="_blank" style="color:var(--accent);">View on asciinema.org →</a>
+  </p>
+</section>
+
 </body>
 </html>

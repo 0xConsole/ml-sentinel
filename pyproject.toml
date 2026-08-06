@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml-sentinel"
+version = "0.1.0"
+description = "Production ML agent that uses DataHub's lineage graph to detect silent failures before they cost money."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+authors = [{name = "0xConsole"}]
+keywords = ["datahub", "mlops", "ml-monitoring", "lineage", "drift", "agent", "mcp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "acryl-datahub>=0.12.0",
+    "httpx>=0.24",
+    "rich>=13.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0"]
+test = ["pytest>=7.0", "pytest-cov>=4.0"]
+dev = ["ruff>=0.1", "mypy>=1.0"]
+
+[project.scripts]
+ml-sentinel = "ml_sentinel.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/0xConsole/ml-sentinel"
+Repository = "https://github.com/0xConsole/ml-sentinel"
+Issues = "https://github.com/0xConsole/ml-sentinel/issues"
+
+[tool.setuptools.packages.find]
+include = ["ml_sentinel*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

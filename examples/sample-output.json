@@ -1,0 +1,265 @@
+{
+  "entities_scanned": 3,
+  "findings_count": 5,
+  "critical": 5,
+  "warn": 0,
+  "info": 0,
+  "by_type": {
+    "model_drift": 1,
+    "schema_mismatch": 1,
+    "training_serving_skew": 1,
+    "broken_lineage": 1,
+    "stale_feature": 1
+  },
+  "duration_seconds": 0.002,
+  "assertions_written": 5,
+  "tags_written": 5,
+  "documents_written": 2,
+  "findings": [
+    {
+      "type": "model_drift",
+      "severity": "CRITICAL",
+      "title": "Significant prediction drift on fraud_model_v3",
+      "description": "Prediction distribution PSI=0.310 exceeds the critical threshold (0.25). The model's output has shifted far enough from its training baseline that predictions are likely unreliable.",
+      "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+      "entity_name": "fraud_model_v3",
+      "evidence": {
+        "entity_name": "fraud_model_v3",
+        "psi": 0.31,
+        "threshold": 0.25,
+        "metric": "prediction_drift_score",
+        "last_serve": "2026-08-06T11:55:00+00:00"
+      },
+      "remediation": "Retrain the model on recent data or investigate the upstream feature pipeline for a distribution shift. Tag the model with `ml-sentinel:drift` in DataHub.",
+      "detected_at": "2026-08-06T21:22:19.897147+00:00",
+      "assertion_urn": "urn:li:assertion:mlSentinel:model_drift:67114a3afaed",
+      "tag_name": "ml-sentinel:model-drift"
+    },
+    {
+      "type": "schema_mismatch",
+      "severity": "CRITICAL",
+      "title": "Missing serving field 'merchant_category' for model fraud_model_v3",
+      "description": "Feature 'merchant_category' (type STRING) is present in the training schema of 'fraud_model_v3' but is MISSING from the serving schema. The model is receiving a default/null value for this feature at serving time, which silently degrades prediction quality.",
+      "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+      "entity_name": "fraud_model_v3",
+      "evidence": {
+        "entity_name": "fraud_model_v3",
+        "field": "merchant_category",
+        "training_type": "STRING",
+        "serving_type": null,
+        "training_dataset": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+        "serving_dataset": "urn:li:dataset:(urn:li:dataPlatform:snowflake,fraud.serving_features,PROD)",
+        "issue": "missing_in_serving"
+      },
+      "remediation": "Restore the 'merchant_category' feature in the serving pipeline, or retrain the model without it if it's been intentionally dropped.",
+      "detected_at": "2026-08-06T21:22:19.898569+00:00",
+      "assertion_urn": "urn:li:assertion:mlSentinel:schema_mismatch:db4948de3041",
+      "tag_name": "ml-sentinel:schema-mismatch"
+    },
+    {
+      "type": "training_serving_skew",
+      "severity": "CRITICAL",
+      "title": "Training-serving skew on feature 'tx_amount' (fraud_model_v3)",
+      "description": "Feature 'tx_amount' has a training-serving PSI of 0.979 (critical threshold 0.25). The serving distribution has shifted far enough from training that the model's learned weights for this feature are likely miscalibrated.",
+      "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+      "entity_name": "fraud_model_v3",
+      "evidence": {
+        "entity_name": "fraud_model_v3",
+        "feature": "tx_amount",
+        "psi": 0.9794,
+        "threshold": 0.25,
+        "training_stats": {
+          "mean": 84.2,
+          "std": 45.0,
+          "null_rate": 0.0,
+          "n_samples": 1200000
+        },
+        "serving_stats": {
+          "mean": 142.7,
+          "std": 68.0,
+          "null_rate": 0.0,
+          "n_samples": 85000
+        }
+      },
+      "remediation": "Compare the preprocessing for 'tx_amount' between the training and serving pipelines. If the serving pipeline is correct, retrain on recent serving data.",
+      "detected_at": "2026-08-06T21:22:19.898652+00:00",
+      "assertion_urn": "urn:li:assertion:mlSentinel:training_serving_skew:0baa2adb2b4b",
+      "tag_name": "ml-sentinel:training-serving-skew"
+    },
+    {
+      "type": "broken_lineage",
+      "severity": "CRITICAL",
+      "title": "Feature table fraud.user_txn_features missing raw-dataset lineage",
+      "description": "The feature table 'fraud.user_txn_features' has a compute-job upstream but no raw-dataset upstream in DataHub. The provenance link from the source data to this feature table is broken \u2014 DataHub cannot trace which raw dataset the features were built from, so impact analysis and training-data audits are blocked.",
+      "entity_urn": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+      "entity_name": "fraud.user_txn_features",
+      "evidence": {
+        "entity_name": "fraud.user_txn_features",
+        "upstream_count": 1,
+        "has_dataset_upstream": false,
+        "has_process_upstream": true,
+        "upstream_urns": [
+          "urn:li:dataProcess:(urn:li:dataPlatform:airflow,compute_user_features,PROD)"
+        ]
+      },
+      "remediation": "Re-emit the lineage edge from the raw source dataset to 'fraud.user_txn_features' (or to its compute job) so the full training-data provenance is preserved.",
+      "detected_at": "2026-08-06T21:22:19.898731+00:00",
+      "assertion_urn": "urn:li:assertion:mlSentinel:broken_lineage:55c603e2801d",
+      "tag_name": "ml-sentinel:broken-lineage"
+    },
+    {
+      "type": "stale_feature",
+      "severity": "CRITICAL",
+      "title": "Stale feature table: fraud.user_txn_features",
+      "description": "Feature table 'fraud.user_txn_features' was last updated 225.4 hours ago, exceeding its freshness SLA of 24h by 9.4x. Models consuming this table are making predictions on stale features.",
+      "entity_urn": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+      "entity_name": "fraud.user_txn_features",
+      "evidence": {
+        "entity_name": "fraud.user_txn_features",
+        "last_modified": "2026-07-28T12:00:00+00:00",
+        "age_hours": 225.4,
+        "sla_hours": 24.0,
+        "sla_breach_ratio": 9.39
+      },
+      "remediation": "Check the feature-compute pipeline (Airflow / Spark job) that writes 'fraud.user_txn_features'. If the job failed, restart it. If the SLA is unrealistic, update the freshness_sla_hours property in DataHub.",
+      "detected_at": "2026-08-06T21:22:19.898753+00:00",
+      "assertion_urn": "urn:li:assertion:mlSentinel:stale_feature:1ece5dcd87a5",
+      "tag_name": "ml-sentinel:stale-feature"
+    }
+  ],
+  "written_back": {
+    "assertions": [
+      {
+        "type": "model_drift",
+        "severity": "CRITICAL",
+        "title": "Significant prediction drift on fraud_model_v3",
+        "description": "Prediction distribution PSI=0.310 exceeds the critical threshold (0.25). The model's output has shifted far enough from its training baseline that predictions are likely unreliable.",
+        "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+        "entity_name": "fraud_model_v3",
+        "evidence": {
+          "entity_name": "fraud_model_v3",
+          "psi": 0.31,
+          "threshold": 0.25,
+          "metric": "prediction_drift_score",
+          "last_serve": "2026-08-06T11:55:00+00:00"
+        },
+        "remediation": "Retrain the model on recent data or investigate the upstream feature pipeline for a distribution shift. Tag the model with `ml-sentinel:drift` in DataHub.",
+        "detected_at": "2026-08-06T21:22:19.897147+00:00",
+        "assertion_urn": "urn:li:assertion:mlSentinel:model_drift:67114a3afaed",
+        "tag_name": "ml-sentinel:model-drift"
+      },
+      {
+        "type": "schema_mismatch",
+        "severity": "CRITICAL",
+        "title": "Missing serving field 'merchant_category' for model fraud_model_v3",
+        "description": "Feature 'merchant_category' (type STRING) is present in the training schema of 'fraud_model_v3' but is MISSING from the serving schema. The model is receiving a default/null value for this feature at serving time, which silently degrades prediction quality.",
+        "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+        "entity_name": "fraud_model_v3",
+        "evidence": {
+          "entity_name": "fraud_model_v3",
+          "field": "merchant_category",
+          "training_type": "STRING",
+          "serving_type": null,
+          "training_dataset": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+          "serving_dataset": "urn:li:dataset:(urn:li:dataPlatform:snowflake,fraud.serving_features,PROD)",
+          "issue": "missing_in_serving"
+        },
+        "remediation": "Restore the 'merchant_category' feature in the serving pipeline, or retrain the model without it if it's been intentionally dropped.",
+        "detected_at": "2026-08-06T21:22:19.898569+00:00",
+        "assertion_urn": "urn:li:assertion:mlSentinel:schema_mismatch:db4948de3041",
+        "tag_name": "ml-sentinel:schema-mismatch"
+      },
+      {
+        "type": "training_serving_skew",
+        "severity": "CRITICAL",
+        "title": "Training-serving skew on feature 'tx_amount' (fraud_model_v3)",
+        "description": "Feature 'tx_amount' has a training-serving PSI of 0.979 (critical threshold 0.25). The serving distribution has shifted far enough from training that the model's learned weights for this feature are likely miscalibrated.",
+        "entity_urn": "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)",
+        "entity_name": "fraud_model_v3",
+        "evidence": {
+          "entity_name": "fraud_model_v3",
+          "feature": "tx_amount",
+          "psi": 0.9794,
+          "threshold": 0.25,
+          "training_stats": {
+            "mean": 84.2,
+            "std": 45.0,
+            "null_rate": 0.0,
+            "n_samples": 1200000
+          },
+          "serving_stats": {
+            "mean": 142.7,
+            "std": 68.0,
+            "null_rate": 0.0,
+            "n_samples": 85000
+          }
+        },
+        "remediation": "Compare the preprocessing for 'tx_amount' between the training and serving pipelines. If the serving pipeline is correct, retrain on recent serving data.",
+        "detected_at": "2026-08-06T21:22:19.898652+00:00",
+        "assertion_urn": "urn:li:assertion:mlSentinel:training_serving_skew:0baa2adb2b4b",
+        "tag_name": "ml-sentinel:training-serving-skew"
+      },
+      {
+        "type": "broken_lineage",
+        "severity": "CRITICAL",
+        "title": "Feature table fraud.user_txn_features missing raw-dataset lineage",
+        "description": "The feature table 'fraud.user_txn_features' has a compute-job upstream but no raw-dataset upstream in DataHub. The provenance link from the source data to this feature table is broken \u2014 DataHub cannot trace which raw dataset the features were built from, so impact analysis and training-data audits are blocked.",
+        "entity_urn": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+        "entity_name": "fraud.user_txn_features",
+        "evidence": {
+          "entity_name": "fraud.user_txn_features",
+          "upstream_count": 1,
+          "has_dataset_upstream": false,
+          "has_process_upstream": true,
+          "upstream_urns": [
+            "urn:li:dataProcess:(urn:li:dataPlatform:airflow,compute_user_features,PROD)"
+          ]
+        },
+        "remediation": "Re-emit the lineage edge from the raw source dataset to 'fraud.user_txn_features' (or to its compute job) so the full training-data provenance is preserved.",
+        "detected_at": "2026-08-06T21:22:19.898731+00:00",
+        "assertion_urn": "urn:li:assertion:mlSentinel:broken_lineage:55c603e2801d",
+        "tag_name": "ml-sentinel:broken-lineage"
+      },
+      {
+        "type": "stale_feature",
+        "severity": "CRITICAL",
+        "title": "Stale feature table: fraud.user_txn_features",
+        "description": "Feature table 'fraud.user_txn_features' was last updated 225.4 hours ago, exceeding its freshness SLA of 24h by 9.4x. Models consuming this table are making predictions on stale features.",
+        "entity_urn": "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)",
+        "entity_name": "fraud.user_txn_features",
+        "evidence": {
+          "entity_name": "fraud.user_txn_features",
+          "last_modified": "2026-07-28T12:00:00+00:00",
+          "age_hours": 225.4,
+          "sla_hours": 24.0,
+          "sla_breach_ratio": 9.39
+        },
+        "remediation": "Check the feature-compute pipeline (Airflow / Spark job) that writes 'fraud.user_txn_features'. If the job failed, restart it. If the SLA is unrealistic, update the freshness_sla_hours property in DataHub.",
+        "detected_at": "2026-08-06T21:22:19.898753+00:00",
+        "assertion_urn": "urn:li:assertion:mlSentinel:stale_feature:1ece5dcd87a5",
+        "tag_name": "ml-sentinel:stale-feature"
+      }
+    ],
+    "tags": {
+      "urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)": [
+        "ml-sentinel:schema-mismatch",
+        "ml-sentinel:training-serving-skew",
+        "ml-sentinel:model-drift"
+      ],
+      "urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)": [
+        "ml-sentinel:stale-feature",
+        "ml-sentinel:broken-lineage"
+      ]
+    },
+    "documents": [
+      {
+        "title": "ML Sentinel report \u2014 fraud_model_v3",
+        "content": "# ML Sentinel Report\n\n**Entity:** `urn:li:mlModel:(urn:li:dataPlatform:feast,fraud_model_v3,PROD)`\n**Findings:** 3\n**Generated:** 2026-08-06T21:22:19.897147+00:00\n\n## Findings\n\n### \ud83d\udd34 1. Significant prediction drift on fraud_model_v3\n\n- **Type:** `model_drift`\n- **Severity:** `CRITICAL`\n- **Assertion URN:** `urn:li:assertion:mlSentinel:model_drift:67114a3afaed`\n- **Tag:** `ml-sentinel:model-drift`\n\n**Description**\n\nPrediction distribution PSI=0.310 exceeds the critical threshold (0.25). The model's output has shifted far enough from its training baseline that predictions are likely unreliable.\n\n**Evidence**\n\n- `entity_name`: `fraud_model_v3`\n- `psi`: `0.31`\n- `threshold`: `0.25`\n- `metric`: `prediction_drift_score`\n- `last_serve`: `2026-08-06T11:55:00+00:00`\n\n**Remediation**\n\nRetrain the model on recent data or investigate the upstream feature pipeline for a distribution shift. Tag the model with `ml-sentinel:drift` in DataHub.\n\n---\n\n### \ud83d\udd34 2. Missing serving field 'merchant_category' for model fraud_model_v3\n\n- **Type:** `schema_mismatch`\n- **Severity:** `CRITICAL`\n- **Assertion URN:** `urn:li:assertion:mlSentinel:schema_mismatch:db4948de3041`\n- **Tag:** `ml-sentinel:schema-mismatch`\n\n**Description**\n\nFeature 'merchant_category' (type STRING) is present in the training schema of 'fraud_model_v3' but is MISSING from the serving schema. The model is receiving a default/null value for this feature at serving time, which silently degrades prediction quality.\n\n**Evidence**\n\n- `entity_name`: `fraud_model_v3`\n- `field`: `merchant_category`\n- `training_type`: `STRING`\n- `serving_type`: `None`\n- `training_dataset`: `urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)`\n- `serving_dataset`: `urn:li:dataset:(urn:li:dataPlatform:snowflake,fraud.serving_features,PROD)`\n- `issue`: `missing_in_serving`\n\n**Remediation**\n\nRestore the 'merchant_category' feature in the serving pipeline, or retrain the model without it if it's been intentionally dropped.\n\n---\n\n### \ud83d\udd34 3. Training-serving skew on feature 'tx_amount' (fraud_model_v3)\n\n- **Type:** `training_serving_skew`\n- **Severity:** `CRITICAL`\n- **Assertion URN:** `urn:li:assertion:mlSentinel:training_serving_skew:0baa2adb2b4b`\n- **Tag:** `ml-sentinel:training-serving-skew`\n\n**Description**\n\nFeature 'tx_amount' has a training-serving PSI of 0.979 (critical threshold 0.25). The serving distribution has shifted far enough from training that the model's learned weights for this feature are likely miscalibrated.\n\n**Evidence**\n\n- `entity_name`: `fraud_model_v3`\n- `feature`: `tx_amount`\n- `psi`: `0.9794`\n- `threshold`: `0.25`\n- `training_stats`: `{'mean': 84.2, 'std': 45.0, 'null_rate': 0.0, 'n_samples': 1200000}`\n- `serving_stats`: `{'mean': 142.7, 'std': 68.0, 'null_rate': 0.0, 'n_samples': 85000}`\n\n**Remediation**\n\nCompare the preprocessing for 'tx_amount' between the training and serving pipelines. If the serving pipeline is correct, retrain on recent serving data.\n\n---\n\n\n_Generated by [ML Sentinel](https://github.com/0xConsole/ml-sentinel) \u2014 a Production ML agent for DataHub._"
+      },
+      {
+        "title": "ML Sentinel report \u2014 fraud.user_txn_features",
+        "content": "# ML Sentinel Report\n\n**Entity:** `urn:li:mlFeatureTable:(urn:li:dataPlatform:feast,fraud.user_txn_features,PROD)`\n**Findings:** 2\n**Generated:** 2026-08-06T21:22:19.898731+00:00\n\n## Findings\n\n### \ud83d\udd34 1. Feature table fraud.user_txn_features missing raw-dataset lineage\n\n- **Type:** `broken_lineage`\n- **Severity:** `CRITICAL`\n- **Assertion URN:** `urn:li:assertion:mlSentinel:broken_lineage:55c603e2801d`\n- **Tag:** `ml-sentinel:broken-lineage`\n\n**Description**\n\nThe feature table 'fraud.user_txn_features' has a compute-job upstream but no raw-dataset upstream in DataHub. The provenance link from the source data to this feature table is broken \u2014 DataHub cannot trace which raw dataset the features were built from, so impact analysis and training-data audits are blocked.\n\n**Evidence**\n\n- `entity_name`: `fraud.user_txn_features`\n- `upstream_count`: `1`\n- `has_dataset_upstream`: `False`\n- `has_process_upstream`: `True`\n- `upstream_urns`: `['urn:li:dataProcess:(urn:li:dataPlatform:airflow,compute_user_features,PROD)']`\n\n**Remediation**\n\nRe-emit the lineage edge from the raw source dataset to 'fraud.user_txn_features' (or to its compute job) so the full training-data provenance is preserved.\n\n---\n\n### \ud83d\udd34 2. Stale feature table: fraud.user_txn_features\n\n- **Type:** `stale_feature`\n- **Severity:** `CRITICAL`\n- **Assertion URN:** `urn:li:assertion:mlSentinel:stale_feature:1ece5dcd87a5`\n- **Tag:** `ml-sentinel:stale-feature`\n\n**Description**\n\nFeature table 'fraud.user_txn_features' was last updated 225.4 hours ago, exceeding its freshness SLA of 24h by 9.4x. Models consuming this table are making predictions on stale features.\n\n**Evidence**\n\n- `entity_name`: `fraud.user_txn_features`\n- `last_modified`: `2026-07-28T12:00:00+00:00`\n- `age_hours`: `225.4`\n- `sla_hours`: `24.0`\n- `sla_breach_ratio`: `9.39`\n\n**Remediation**\n\nCheck the feature-compute pipeline (Airflow / Spark job) that writes 'fraud.user_txn_features'. If the job failed, restart it. If the SLA is unrealistic, update the freshness_sla_hours property in DataHub.\n\n---\n\n\n_Generated by [ML Sentinel](https://github.com/0xConsole/ml-sentinel) \u2014 a Production ML agent for DataHub._"
+      }
+    ]
+  }
+}
